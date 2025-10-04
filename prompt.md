@@ -1,4 +1,4 @@
-### original prompt
+# original prompt
 
 Create a web based application that collects recipes and creates a shopping list automatically. Implement the following features:
 1. The main page of the application is a photo gallery of the stored recipes
@@ -12,23 +12,20 @@ Create a web based application that collects recipes and creates a shopping list
 9. Shopping list is ordered by categories based on the nature of the ingredient, such as vegetables, fruits, meat, dairy… Vegetables and fruits must be shown at the beginning of the list
 Choose the best technology stack to implement this application. Explain at the end how the user can run the application locally. User has a macbook
 
-### 1st RFI
-here are some modifications:
-
-user should be able to open any single recipe to see its ingredients and instructions
-
-change the colour theme to light green
-
-quantiry aggregation. add total amount of each ingredient  from all selected recipes in the shopping list
-
-user is able to choose multiple tags in the filter function of the main page
+# 1st RFI
+modify the application code based on the following RFI (request for improvement):
+- user should be able to open any single recipe to see its ingredients and instructions
+- change the colour theme to light green
+- quantiry aggregation. add total amount of each ingredient  from all selected recipes in the shopping list
+- user is able to choose multiple tags in the filter function of the main page
+- very important technical change: the app data (json file) should be stored on users local computer storage in the same folder as html file and not in the browser local storage
 
 
 
 
 
 
-### AI reply 
+# First AI reply 
 Perfect! I've created a fully functional Recipe Manager and Shopping List application. Here's what I've built:
 
 ## **Features Implemented:**
