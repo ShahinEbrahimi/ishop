@@ -22,8 +22,8 @@ modify the application code based on the following RFI (request for improvement)
 
 
 # 2nd CR
-- user is able to edit all fields of an  existing recipes. add or remove ingredients. change photo. change instructions. change the existing ingredients name or quantity etc. 
-- delete the categories string from the shopping list and keep the items and quantitis in a same line
+- user is able to edit all fields of existing recipes. add or remove ingredients. change photo. change instructions. change the existing ingredients name or quantity etc. 
+- delete the categories header string from the shopping list and keep the items and quantities in a same line
 here is an example how the final shopping list should look like:
 
 tomato 5
@@ -34,6 +34,12 @@ pasta
 avocado
 etc
 
+notice that items in the shopping list are still grouped in categories only without the category header.
+
+- make the photo for a new recipe optional. if the user does not upload any photo use a default photo.
+- add a portion counter to the recipies in the main page, default portion is 2 unless the user changes this value. The generated shopping list should be based on how many portions of each recipes are selected.
+- add a save button to the main page. Do not save every change automatically. The user should be able to save changes manually by clicking on the save button. Add a check feature that if the user wants to close the app, the app should warn him if there are unsaved changes.
+- when the user chooses a recipe, the recipe should move to the first position in the recipe gallery. So that the user can see clearly at the very beginning which recipes have been selected.
 
 
 # First AI reply 

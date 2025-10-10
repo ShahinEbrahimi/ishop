@@ -73,6 +73,12 @@
             align-items: center;
         }
 
+        .unsaved-indicator {
+            color: #ff9800;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+
         .controls {
             display: flex;
             gap: 15px;
@@ -142,6 +148,26 @@
         .btn-warning {
             background: #ffa726;
             color: white;
+        }
+
+        .btn-info {
+            background: #29b6f6;
+            color: white;
+        }
+
+        .btn-save {
+            background: linear-gradient(135deg, #ff9800, #f57c00);
+            color: white;
+        }
+
+        .btn-save.has-changes {
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
         }
 
         .tag-filters {
@@ -227,6 +253,17 @@
             background: linear-gradient(135deg, #84fab0, #8fd3f4);
         }
 
+        .default-recipe-image {
+            width: 100%;
+            height: 200px;
+            background: linear-gradient(135deg, #84fab0, #8fd3f4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 60px;
+            color: white;
+        }
+
         .recipe-info {
             padding: 20px;
         }
@@ -242,6 +279,7 @@
             display: flex;
             gap: 8px;
             flex-wrap: wrap;
+            margin-bottom: 10px;
         }
 
         .recipe-tag {
@@ -250,6 +288,29 @@
             border-radius: 12px;
             font-size: 12px;
             color: #2e7d32;
+        }
+
+        .portion-control {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 10px;
+            padding: 8px;
+            background: #f5f5f5;
+            border-radius: 8px;
+        }
+
+        .portion-control label {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .portion-control input {
+            width: 60px;
+            padding: 5px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            text-align: center;
         }
 
         .modal {
@@ -358,43 +419,14 @@
             font-size: 1.3em;
         }
 
-        .category-section {
-            margin-bottom: 20px;
-        }
-
-        .category-title {
-            font-weight: 600;
-            color: #43a047;
-            margin-bottom: 10px;
-            font-size: 1.1em;
-            padding: 10px;
-            background: #e8f5e9;
-            border-radius: 10px;
-        }
-
-        .shopping-item {
-            padding: 10px;
-            margin: 5px 0;
+        .shopping-list-content {
+            font-family: monospace;
+            font-size: 16px;
+            line-height: 1.8;
             background: #f5f5f5;
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            transition: all 0.3s;
-        }
-
-        .shopping-item:hover {
-            background: #e8f5e9;
-        }
-
-        .shopping-item .item-name {
-            font-weight: 600;
-            color: #2d5f3f;
-        }
-
-        .shopping-item .item-total {
-            color: #666;
-            font-size: 14px;
+            padding: 20px;
+            border-radius: 10px;
+            white-space: pre-line;
         }
 
         .close {
@@ -439,11 +471,13 @@
             display: flex;
         }
 
-        #imagePreview {
+        #imagePreview,
+        #editImagePreview {
             max-width: 200px;
             max-height: 200px;
             margin-top: 10px;
             border-radius: 10px;
+            display: block;
         }
 
         .empty-state {
@@ -527,6 +561,18 @@
         .auto-save-indicator.show {
             opacity: 1;
         }
+
+        .image-change-note {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        .optional-label {
+            color: #999;
+            font-size: 12px;
+            font-weight: normal;
+        }
     </style>
 </head>
 <body>
@@ -553,6 +599,9 @@
                 <span>📁 No file loaded</span>
                 <button class="btn btn-warning" onclick="changeDatabase()" style="padding: 6px 12px; font-size: 14px;">Change Database</button>
             </div>
+            <div style="background: #f0f8f0; padding: 10px; border-radius: 8px; margin-bottom: 15px; font-size: 14px; color: #2d5f3f;">
+                💡 <strong>Tips:</strong> Click recipe to view details | Cmd/Ctrl+Click to select (default 2 portions) | Adjust portions with counter | Each recipe = 1 portion
+            </div>
             <div class="controls">
                 <input type="text" class="search-bar" id="searchBar" placeholder="Search recipes...">
                 <button class="btn btn-primary" onclick="showAddRecipeModal()">
@@ -561,8 +610,8 @@
                 <button class="btn btn-success" id="generateListBtn" onclick="generateShoppingList()" style="display: none;">
                     <span>🛒</span> Generate List (<span id="selectedCount">0</span>)
                 </button>
-                <button class="btn btn-secondary" onclick="saveToFile()">
-                    <span>💾</span> Save to File
+                <button class="btn btn-save" id="saveButton" onclick="saveToFile()">
+                    <span>💾</span> Save Changes
                 </button>
             </div>
             <div class="tag-filters" id="tagFilters"></div>
@@ -583,7 +632,7 @@
 
         <div class="shopping-list" id="shoppingListContainer" style="display: none;">
             <h3>📝 Shopping List</h3>
-            <div id="shoppingListContent"></div>
+            <div class="shopping-list-content" id="shoppingListContent"></div>
             <div style="margin-top: 20px; display: flex; gap: 10px; flex-wrap: wrap;">
                 <button class="btn btn-primary" onclick="copyShoppingList()">📋 Copy to Clipboard</button>
                 <button class="btn btn-secondary" onclick="sendToNotes()">📱 Send to iPhone Notes</button>
@@ -603,8 +652,8 @@
                 </div>
                 
                 <div class="form-group">
-                    <label>Photo *</label>
-                    <input type="file" id="recipeImage" accept="image/*" onchange="previewImage(event)" required>
+                    <label>Photo <span class="optional-label">(optional)</span></label>
+                    <input type="file" id="recipeImage" accept="image/*" onchange="previewImage(event)">
                     <img id="imagePreview" style="display: none;">
                 </div>
                 
@@ -635,6 +684,48 @@
         </div>
     </div>
 
+    <!-- Edit Recipe Modal -->
+    <div id="editRecipeModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeEditModal()">&times;</span>
+            <h2>Edit Recipe</h2>
+            <form id="editRecipeForm">
+                <input type="hidden" id="editRecipeId">
+                
+                <div class="form-group">
+                    <label>Recipe Name *</label>
+                    <input type="text" id="editRecipeName" required>
+                </div>
+                
+                <div class="form-group">
+                    <label>Photo</label>
+                    <input type="file" id="editRecipeImage" accept="image/*" onchange="previewEditImage(event)">
+                    <div class="image-change-note">Leave empty to keep current photo</div>
+                    <img id="editImagePreview" style="display: none;">
+                    <img id="currentImagePreview" style="display: none;">
+                </div>
+                
+                <div class="form-group">
+                    <label>Ingredients *</label>
+                    <div id="editIngredientsList"></div>
+                    <button type="button" class="btn btn-secondary" onclick="addEditIngredientField()">+ Add Ingredient</button>
+                </div>
+                
+                <div class="form-group">
+                    <label>Instructions</label>
+                    <textarea id="editRecipeInstructions" placeholder="Step-by-step instructions..."></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label>Tags (comma separated)</label>
+                    <input type="text" id="editRecipeTags" placeholder="e.g., vegan, dessert, quick">
+                </div>
+                
+                <button type="submit" class="btn btn-primary">Update Recipe</button>
+            </form>
+        </div>
+    </div>
+
     <!-- Recipe Detail Modal -->
     <div id="recipeDetailModal" class="modal">
         <div class="modal-content">
@@ -646,12 +737,16 @@
     <script>
         // Data storage
         let recipes = [];
-        let selectedRecipes = new Set();
+        let selectedRecipes = new Map(); // Map to store recipe id and portions
         let activeFilters = new Set();
         let fileHandle = null;
         let currentFileName = null;
+        let editingRecipeId = null;
+        let currentEditImage = null;
+        let hasUnsavedChanges = false;
+        const DEFAULT_IMAGE = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyMDAiIGhlaWdodD0iMjAwIj48cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iIzg0ZmFiMCIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LXNpemU9IjYwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkeT0iLjNlbSIgZmlsbD0iI2ZmZiI+🍽️</90leHQ+PC9zdmc+';
 
-        // Food categories for shopping list organization
+        // Food categories for shopping list organization (without headers)
         const foodCategories = {
             'Vegetables': ['carrot', 'potato', 'onion', 'garlic', 'tomato', 'pepper', 'broccoli', 'spinach', 'lettuce', 'cucumber', 'celery', 'mushroom', 'corn', 'peas', 'bean', 'cabbage', 'cauliflower', 'zucchini', 'eggplant', 'asparagus', 'kale', 'leek', 'radish', 'beet', 'squash', 'artichoke', 'brussels sprout'],
             'Fruits': ['apple', 'banana', 'orange', 'lemon', 'lime', 'grape', 'strawberry', 'blueberry', 'raspberry', 'mango', 'pineapple', 'watermelon', 'peach', 'pear', 'cherry', 'plum', 'apricot', 'kiwi', 'avocado', 'coconut', 'pomegranate', 'papaya', 'melon', 'grapefruit', 'blackberry', 'fig', 'date', 'cranberry'],
@@ -672,15 +767,56 @@
             setupEventListeners();
         });
 
+        // Warn before leaving if unsaved changes
+        window.addEventListener('beforeunload', function (e) {
+            if (hasUnsavedChanges) {
+                e.preventDefault();
+                e.returnValue = 'You have unsaved changes. Are you sure you want to leave?';
+            }
+        });
+
+        function setUnsavedChanges(value) {
+            hasUnsavedChanges = value;
+            const saveButton = document.getElementById('saveButton');
+            const fileStatus = document.getElementById('fileStatus');
+            
+            if (saveButton) {
+                if (value) {
+                    saveButton.classList.add('has-changes');
+                } else {
+                    saveButton.classList.remove('has-changes');
+                }
+            }
+            
+            if (fileStatus && value) {
+                const unsavedSpan = fileStatus.querySelector('.unsaved-indicator');
+                if (!unsavedSpan) {
+                    const indicator = document.createElement('span');
+                    indicator.className = 'unsaved-indicator';
+                    indicator.textContent = '• Unsaved changes';
+                    fileStatus.querySelector('span').appendChild(indicator);
+                }
+            } else if (fileStatus) {
+                const unsavedSpan = fileStatus.querySelector('.unsaved-indicator');
+                if (unsavedSpan) {
+                    unsavedSpan.remove();
+                }
+            }
+        }
+
         function setupEventListeners() {
             const searchBar = document.getElementById('searchBar');
             const recipeForm = document.getElementById('recipeForm');
+            const editRecipeForm = document.getElementById('editRecipeForm');
             
             if (searchBar) {
                 searchBar.addEventListener('input', filterRecipes);
             }
             if (recipeForm) {
                 recipeForm.addEventListener('submit', saveRecipe);
+            }
+            if (editRecipeForm) {
+                editRecipeForm.addEventListener('submit', updateRecipe);
             }
         }
 
@@ -722,6 +858,7 @@
                     showMainApp();
                     displayRecipes();
                     updateTagFilters();
+                    setUnsavedChanges(false);
                 } catch (err) {
                     alert('Error reading file: ' + err.message);
                 }
@@ -731,8 +868,10 @@
         }
 
         function changeDatabase() {
-            if (confirm('Save current changes before switching database?')) {
-                saveToFile();
+            if (hasUnsavedChanges) {
+                if (confirm('You have unsaved changes. Save before switching database?')) {
+                    saveToFile();
+                }
             }
             document.getElementById('mainApp').style.display = 'none';
             document.getElementById('initScreen').style.display = 'block';
@@ -741,6 +880,7 @@
             activeFilters.clear();
             fileHandle = null;
             currentFileName = null;
+            setUnsavedChanges(false);
         }
 
         function showMainApp() {
@@ -765,6 +905,7 @@
                 await writable.write(JSON.stringify(recipes, null, 2));
                 await writable.close();
                 showSaveIndicator();
+                setUnsavedChanges(false);
                 return true;
             } catch (err) {
                 console.error('Failed to save to file handle:', err);
@@ -789,6 +930,7 @@
             link.click();
             URL.revokeObjectURL(url);
             showSaveIndicator();
+            setUnsavedChanges(false);
         }
 
         function showSaveIndicator() {
@@ -808,7 +950,7 @@
             const searchBar = document.getElementById('searchBar');
             const searchTerm = searchBar ? searchBar.value.toLowerCase() : '';
             
-            let filtered = recipes;
+            let filtered = [...recipes];
             
             // Apply search filter
             if (searchTerm) {
@@ -824,6 +966,15 @@
                     Array.from(activeFilters).some(filter => recipe.tags.includes(filter))
                 );
             }
+            
+            // Sort to put selected recipes first
+            filtered.sort((a, b) => {
+                const aSelected = selectedRecipes.has(a.id);
+                const bSelected = selectedRecipes.has(b.id);
+                if (aSelected && !bSelected) return -1;
+                if (!aSelected && bSelected) return 1;
+                return 0;
+            });
             
             grid.innerHTML = '';
             
@@ -842,31 +993,74 @@
         function createRecipeCard(recipe) {
             const card = document.createElement('div');
             card.className = 'recipe-card';
-            if (selectedRecipes.has(recipe.id)) {
+            const portions = selectedRecipes.get(recipe.id) || 0;
+            if (portions > 0) {
                 card.classList.add('selected');
             }
             
+            const imageHtml = recipe.image && recipe.image !== DEFAULT_IMAGE
+                ? `<img src="${recipe.image}" alt="${recipe.name}" class="recipe-image">`
+                : `<div class="default-recipe-image">🍽️</div>`;
+            
             card.innerHTML = `
-                <img src="${recipe.image}" alt="${recipe.name}" class="recipe-image">
+                ${imageHtml}
                 <div class="recipe-info">
                     <div class="recipe-title">${recipe.name}</div>
                     <div class="recipe-tags">
                         ${recipe.tags.map(tag => `<span class="recipe-tag">${tag}</span>`).join('')}
                     </div>
+                    <div class="portion-control">
+                        <label>Portions:</label>
+                        <input type="number" min="0" value="${portions}" 
+                               onchange="updatePortions(${recipe.id}, this.value)"
+                               onclick="event.stopPropagation()">
+                    </div>
                 </div>
             `;
             
-            // Click to open detail, Ctrl/Cmd+Click to select
+            // Click to open detail or select with Cmd/Ctrl
             card.onclick = (e) => {
-                if (e.metaKey || e.ctrlKey) {
-                    e.preventDefault();
-                    toggleRecipeSelection(recipe.id);
-                } else {
-                    openRecipeDetail(recipe.id);
+                if (e.target.tagName !== 'INPUT') {
+                    if (e.metaKey || e.ctrlKey) {
+                        // Cmd/Ctrl + Click to select/deselect
+                        e.preventDefault();
+                        toggleRecipeSelection(recipe.id);
+                    } else {
+                        // Normal click to open detail
+                        openRecipeDetail(recipe.id);
+                    }
                 }
             };
             
             return card;
+        }
+
+        function updatePortions(recipeId, portions) {
+            const portionCount = parseInt(portions) || 0;
+            
+            if (portionCount > 0) {
+                selectedRecipes.set(recipeId, portionCount);
+            } else {
+                selectedRecipes.delete(recipeId);
+            }
+            
+            displayRecipes();
+            updateSelectionUI();
+            setUnsavedChanges(true);
+        }
+
+        function toggleRecipeSelection(recipeId) {
+            if (selectedRecipes.has(recipeId)) {
+                // If already selected, remove it
+                selectedRecipes.delete(recipeId);
+            } else {
+                // If not selected, add with default 2 portions
+                selectedRecipes.set(recipeId, 2);
+            }
+            
+            displayRecipes();
+            updateSelectionUI();
+            setUnsavedChanges(true);
         }
 
         function openRecipeDetail(id) {
@@ -876,15 +1070,17 @@
             const modal = document.getElementById('recipeDetailModal');
             const content = document.getElementById('recipeDetailContent');
             
+            const imageHtml = recipe.image && recipe.image !== DEFAULT_IMAGE
+                ? `<img src="${recipe.image}" alt="${recipe.name}" class="recipe-detail-image">`
+                : `<div class="default-recipe-image" style="height: 300px; font-size: 100px;">🍽️</div>`;
+            
             content.innerHTML = `
                 <h2>${recipe.name}</h2>
                 <div class="recipe-actions">
-                    <button class="btn btn-primary" onclick="toggleRecipeSelection(${recipe.id}); closeDetailModal();">
-                        ${selectedRecipes.has(recipe.id) ? 'Remove from' : 'Add to'} Shopping List
-                    </button>
+                    <button class="btn btn-info" onclick="openEditModal(${recipe.id})">Edit Recipe</button>
                     <button class="btn btn-danger" onclick="deleteRecipe(${recipe.id})">Delete Recipe</button>
                 </div>
-                <img src="${recipe.image}" alt="${recipe.name}" class="recipe-detail-image">
+                ${imageHtml}
                 
                 <div class="recipe-tags" style="margin-bottom: 20px;">
                     ${recipe.tags.map(tag => `<span class="recipe-tag">${tag}</span>`).join('')}
@@ -910,6 +1106,152 @@
             modal.style.display = 'block';
         }
 
+        function openEditModal(id) {
+            const recipe = recipes.find(r => r.id === id);
+            if (!recipe) return;
+            
+            editingRecipeId = id;
+            currentEditImage = recipe.image || DEFAULT_IMAGE;
+            
+            // Close detail modal first
+            closeDetailModal();
+            
+            // Populate edit form
+            document.getElementById('editRecipeId').value = recipe.id;
+            document.getElementById('editRecipeName').value = recipe.name;
+            document.getElementById('editRecipeInstructions').value = recipe.instructions || '';
+            document.getElementById('editRecipeTags').value = recipe.tags.join(', ');
+            
+            // Show current image
+            const currentImagePreview = document.getElementById('currentImagePreview');
+            if (recipe.image && recipe.image !== DEFAULT_IMAGE) {
+                currentImagePreview.src = recipe.image;
+                currentImagePreview.style.display = 'block';
+            } else {
+                currentImagePreview.style.display = 'none';
+            }
+            
+            // Populate ingredients
+            const ingredientsList = document.getElementById('editIngredientsList');
+            ingredientsList.innerHTML = '';
+            recipe.ingredients.forEach(ing => {
+                const div = document.createElement('div');
+                div.className = 'ingredient-input';
+                div.innerHTML = `
+                    <input type="text" placeholder="Quantity (e.g., 2 cups)" class="ingredient-qty" value="${ing.quantity || ''}">
+                    <input type="text" placeholder="Ingredient name" class="ingredient-name" value="${ing.name}">
+                    <button type="button" class="remove-ingredient" onclick="removeIngredient(this)">×</button>
+                `;
+                ingredientsList.appendChild(div);
+            });
+            
+            document.getElementById('editRecipeModal').style.display = 'block';
+        }
+
+        function closeEditModal() {
+            document.getElementById('editRecipeModal').style.display = 'none';
+            document.getElementById('editRecipeForm').reset();
+            document.getElementById('editImagePreview').style.display = 'none';
+            document.getElementById('currentImagePreview').style.display = 'none';
+            editingRecipeId = null;
+            currentEditImage = null;
+        }
+
+        function updateRecipe(event) {
+            event.preventDefault();
+            
+            const id = parseInt(document.getElementById('editRecipeId').value);
+            const name = document.getElementById('editRecipeName').value;
+            const imageFile = document.getElementById('editRecipeImage').files[0];
+            const instructions = document.getElementById('editRecipeInstructions').value;
+            const tags = document.getElementById('editRecipeTags').value
+                .split(',')
+                .map(tag => tag.trim())
+                .filter(tag => tag);
+            
+            const ingredients = [];
+            document.querySelectorAll('#editIngredientsList .ingredient-input').forEach(input => {
+                const qty = input.querySelector('.ingredient-qty').value;
+                const name = input.querySelector('.ingredient-name').value;
+                if (name) {
+                    ingredients.push({ quantity: qty, name: name });
+                }
+            });
+            
+            if (!name || ingredients.length === 0) {
+                alert('Please fill in all required fields');
+                return;
+            }
+            
+            // Find and update recipe
+            const recipeIndex = recipes.findIndex(r => r.id === id);
+            if (recipeIndex === -1) return;
+            
+            if (imageFile) {
+                // New image uploaded
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    recipes[recipeIndex] = {
+                        id: id,
+                        name: name,
+                        image: e.target.result,
+                        ingredients: ingredients,
+                        instructions: instructions,
+                        tags: tags
+                    };
+                    
+                    setUnsavedChanges(true);
+                    closeEditModal();
+                    displayRecipes();
+                    updateTagFilters();
+                };
+                reader.readAsDataURL(imageFile);
+            } else {
+                // Keep existing image
+                recipes[recipeIndex] = {
+                    id: id,
+                    name: name,
+                    image: currentEditImage,
+                    ingredients: ingredients,
+                    instructions: instructions,
+                    tags: tags
+                };
+                
+                setUnsavedChanges(true);
+                closeEditModal();
+                displayRecipes();
+                updateTagFilters();
+            }
+        }
+
+        function addEditIngredientField() {
+            const container = document.getElementById('editIngredientsList');
+            const div = document.createElement('div');
+            div.className = 'ingredient-input';
+            div.innerHTML = `
+                <input type="text" placeholder="Quantity (e.g., 2 cups)" class="ingredient-qty">
+                <input type="text" placeholder="Ingredient name" class="ingredient-name">
+                <button type="button" class="remove-ingredient" onclick="removeIngredient(this)">×</button>
+            `;
+            container.appendChild(div);
+        }
+
+        function previewEditImage(event) {
+            const preview = document.getElementById('editImagePreview');
+            const currentPreview = document.getElementById('currentImagePreview');
+            const file = event.target.files[0];
+            
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    preview.src = e.target.result;
+                    preview.style.display = 'block';
+                    currentPreview.style.display = 'none';
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
         function closeDetailModal() {
             document.getElementById('recipeDetailModal').style.display = 'none';
             displayRecipes();
@@ -919,24 +1261,13 @@
         function deleteRecipe(id) {
             if (confirm('Are you sure you want to delete this recipe?')) {
                 recipes = recipes.filter(r => r.id !== id);
-                saveToFile();
                 selectedRecipes.delete(id);
+                setUnsavedChanges(true);
                 closeDetailModal();
                 displayRecipes();
                 updateTagFilters();
                 updateSelectionUI();
             }
-        }
-
-        function toggleRecipeSelection(id) {
-            if (selectedRecipes.has(id)) {
-                selectedRecipes.delete(id);
-            } else {
-                selectedRecipes.add(id);
-            }
-            
-            displayRecipes();
-            updateSelectionUI();
         }
 
         function updateSelectionUI() {
@@ -1088,126 +1419,72 @@
                 }
             });
             
-            if (!name || !imageFile || ingredients.length === 0) {
+            if (!name || ingredients.length === 0) {
                 alert('Please fill in all required fields');
                 return;
             }
             
-            const reader = new FileReader();
-            reader.onload = function(e) {
+            if (imageFile) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const recipe = {
+                        id: Date.now(),
+                        name: name,
+                        image: e.target.result,
+                        ingredients: ingredients,
+                        instructions: instructions,
+                        tags: tags
+                    };
+                    
+                    recipes.push(recipe);
+                    setUnsavedChanges(true);
+                    
+                    closeModal();
+                    displayRecipes();
+                    updateTagFilters();
+                };
+                reader.readAsDataURL(imageFile);
+            } else {
+                // No image provided, use default
                 const recipe = {
                     id: Date.now(),
                     name: name,
-                    image: e.target.result,
+                    image: DEFAULT_IMAGE,
                     ingredients: ingredients,
                     instructions: instructions,
                     tags: tags
                 };
                 
                 recipes.push(recipe);
-                saveToFile();
+                setUnsavedChanges(true);
                 
                 closeModal();
                 displayRecipes();
                 updateTagFilters();
-            };
-            reader.readAsDataURL(imageFile);
+            }
         }
 
-        // Parse quantity and convert to common unit for aggregation
-        function parseQuantity(qty) {
-            if (!qty) return { amount: 1, unit: 'item' };
+        function multiplyQuantity(qty, multiplier) {
+            if (!qty || multiplier === 1) return qty;
             
-            const normalizedQty = qty.toLowerCase();
-            
-            // Extract number (including fractions)
-            let amount = 1;
-            const fractionMap = {
-                '½': 0.5, '1/2': 0.5,
-                '⅓': 0.333, '1/3': 0.333,
-                '¼': 0.25, '1/4': 0.25,
-                '⅔': 0.667, '2/3': 0.667,
-                '¾': 0.75, '3/4': 0.75,
-                '⅛': 0.125, '1/8': 0.125,
-                '⅜': 0.375, '3/8': 0.375,
-                '⅝': 0.625, '5/8': 0.625,
-                '⅞': 0.875, '7/8': 0.875
-            };
-            
-            // Check for fractions first
-            for (const [fraction, value] of Object.entries(fractionMap)) {
-                if (normalizedQty.includes(fraction)) {
-                    amount = value;
-                    // Check if there's a whole number before the fraction
-                    const wholeMatch = normalizedQty.match(/(\d+)\s*[½⅓¼⅔¾⅛⅜⅝⅞]/);
-                    if (wholeMatch) {
-                        amount += parseInt(wholeMatch[1]);
-                    }
-                    break;
+            const match = qty.match(/^([\d.\/]+)\s*(.*)$/);
+            if (match) {
+                let amount = match[1];
+                const unit = match[2];
+                
+                // Handle fractions
+                if (amount.includes('/')) {
+                    const parts = amount.split('/');
+                    amount = parseFloat(parts[0]) / parseFloat(parts[1]);
+                } else {
+                    amount = parseFloat(amount);
                 }
+                
+                const newAmount = amount * multiplier;
+                return newAmount + (unit ? ' ' + unit : '');
             }
             
-            // If no fraction found, look for regular numbers
-            if (amount === 1) {
-                const numberMatch = normalizedQty.match(/([\d.]+)/);
-                if (numberMatch) {
-                    amount = parseFloat(numberMatch[0]);
-                }
-            }
-            
-            // Extract unit and standardize
-            let unit = normalizedQty.replace(/[\d.\/½⅓¼⅔¾⅛⅜⅝⅞\s]+/g, '').trim();
-            
-            // Standardize units
-            const unitMap = {
-                'cup': 'cups', 'cups': 'cups', 'c': 'cups',
-                'tablespoon': 'tbsp', 'tablespoons': 'tbsp', 'tbsp': 'tbsp', 'tbs': 'tbsp', 'tbsps': 'tbsp',
-                'teaspoon': 'tsp', 'teaspoons': 'tsp', 'tsp': 'tsp', 'tsps': 'tsp',
-                'ounce': 'oz', 'ounces': 'oz', 'oz': 'oz',
-                'pound': 'lbs', 'pounds': 'lbs', 'lb': 'lbs', 'lbs': 'lbs',
-                'gram': 'g', 'grams': 'g', 'g': 'g', 'gr': 'g',
-                'kilogram': 'kg', 'kilograms': 'kg', 'kg': 'kg', 'kilo': 'kg', 'kilos': 'kg',
-                'milliliter': 'ml', 'milliliters': 'ml', 'ml': 'ml',
-                'liter': 'L', 'liters': 'L', 'l': 'L', 'litre': 'L', 'litres': 'L',
-                'clove': 'cloves', 'cloves': 'cloves',
-                'piece': 'pieces', 'pieces': 'pieces', 'pcs': 'pieces',
-                'can': 'cans', 'cans': 'cans',
-                'package': 'packages', 'packages': 'packages', 'pkg': 'packages',
-                'bunch': 'bunches', 'bunches': 'bunches',
-                'pinch': 'pinches', 'pinches': 'pinches',
-                'dash': 'dashes', 'dashes': 'dashes',
-                'handful': 'handfuls', 'handfuls': 'handfuls'
-            };
-            
-            unit = unitMap[unit] || unit || 'items';
-            
-            return { amount, unit };
-        }
-
-        function aggregateQuantities(quantities) {
-            const aggregated = {};
-            
-            quantities.forEach(qty => {
-                const parsed = parseQuantity(qty);
-                if (!aggregated[parsed.unit]) {
-                    aggregated[parsed.unit] = 0;
-                }
-                aggregated[parsed.unit] += parsed.amount;
-            });
-            
-            // Format the aggregated quantities
-            const result = Object.entries(aggregated)
-                .map(([unit, amount]) => {
-                    // Round to reasonable precision
-                    if (amount === Math.floor(amount)) {
-                        return `${amount} ${unit}`;
-                    } else {
-                        return `${amount.toFixed(2)} ${unit}`;
-                    }
-                })
-                .join(' + ');
-            
-            return result;
+            return qty;
         }
 
         function generateShoppingList() {
@@ -1218,25 +1495,41 @@
             
             const ingredientMap = new Map();
             
-            // Collect all ingredients with their quantities
+            // Collect all ingredients with portions multiplier
             recipes.forEach(recipe => {
-                if (selectedRecipes.has(recipe.id)) {
+                const portions = selectedRecipes.get(recipe.id);
+                if (portions && portions > 0) {
+                    // Each recipe is for 1 portion, so multiply directly by portions
+                    const multiplier = portions;
+                    
                     recipe.ingredients.forEach(ing => {
                         const key = ing.name.toLowerCase();
+                        const adjustedQty = multiplyQuantity(ing.quantity, multiplier);
+                        
                         if (ingredientMap.has(key)) {
                             const existing = ingredientMap.get(key);
-                            existing.quantities.push(ing.quantity);
+                            existing.quantities.push(adjustedQty);
                         } else {
                             ingredientMap.set(key, {
                                 name: ing.name,
-                                quantities: [ing.quantity]
+                                quantities: [adjustedQty]
                             });
                         }
                     });
                 }
             });
             
-            // Categorize ingredients
+            // Display shopping list in simplified format
+            displayShoppingList(ingredientMap);
+        }
+
+        function displayShoppingList(ingredientMap) {
+            const container = document.getElementById('shoppingListContainer');
+            const content = document.getElementById('shoppingListContent');
+            
+            if (!container || !content) return;
+            
+            // Categorize ingredients but don't show headers
             const categorized = {};
             Object.keys(foodCategories).forEach(cat => {
                 categorized[cat] = [];
@@ -1256,17 +1549,7 @@
                 }
             });
             
-            // Display shopping list
-            displayShoppingList(categorized);
-        }
-
-        function displayShoppingList(categorized) {
-            const container = document.getElementById('shoppingListContainer');
-            const content = document.getElementById('shoppingListContent');
-            
-            if (!container || !content) return;
-            
-            content.innerHTML = '';
+            let listText = '';
             
             // Order categories with Vegetables and Fruits first
             const orderedCategories = ['Vegetables', 'Fruits', 'Meat & Poultry', 'Seafood', 'Dairy', 
@@ -1275,56 +1558,57 @@
             
             orderedCategories.forEach(category => {
                 if (categorized[category] && categorized[category].length > 0) {
-                    const section = document.createElement('div');
-                    section.className = 'category-section';
-                    
-                    const title = document.createElement('div');
-                    title.className = 'category-title';
-                    title.textContent = category;
-                    section.appendChild(title);
-                    
                     categorized[category].forEach(item => {
-                        const itemDiv = document.createElement('div');
-                        itemDiv.className = 'shopping-item';
-                        
-                        // Aggregate quantities
                         const aggregatedQty = aggregateQuantities(item.quantities.filter(q => q));
-                        
-                        itemDiv.innerHTML = `
-                            <span>☐</span>
-                            <div>
-                                <span class="item-name">${item.name}</span>
-                                ${aggregatedQty ? `<span class="item-total"> — Total: ${aggregatedQty}</span>` : ''}
-                            </div>
-                        `;
-                        section.appendChild(itemDiv);
+                        if (aggregatedQty) {
+                            listText += `${item.name} ${aggregatedQty}\n`;
+                        } else {
+                            listText += `${item.name}\n`;
+                        }
                     });
-                    
-                    content.appendChild(section);
                 }
             });
             
+            content.textContent = listText;
             container.style.display = 'block';
             container.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function aggregateQuantities(quantities) {
+            if (quantities.length === 0) return '';
+            if (quantities.length === 1) return quantities[0];
+            
+            // Try to aggregate if they're numbers with same unit
+            const parsed = quantities.map(q => {
+                const match = q.toString().match(/^([\d.]+)\s*(.*)$/);
+                if (match) {
+                    return { 
+                        amount: parseFloat(match[1]), 
+                        unit: match[2].trim() 
+                    };
+                }
+                return null;
+            });
+            
+            // If all have same unit or no unit, sum them
+            const validParsed = parsed.filter(p => p !== null);
+            if (validParsed.length === quantities.length && validParsed.length > 0) {
+                const firstUnit = validParsed[0].unit;
+                if (validParsed.every(p => p.unit === firstUnit)) {
+                    const total = validParsed.reduce((sum, p) => sum + p.amount, 0);
+                    return Math.round(total * 100) / 100 + (firstUnit ? ' ' + firstUnit : '');
+                }
+            }
+            
+            // Otherwise just return first quantity
+            return quantities[0];
         }
 
         function copyShoppingList() {
             const content = document.getElementById('shoppingListContent');
             if (!content) return;
             
-            let text = '📝 Shopping List\n\n';
-            
-            content.querySelectorAll('.category-section').forEach(section => {
-                const category = section.querySelector('.category-title').textContent;
-                text += `${category}:\n`;
-                
-                section.querySelectorAll('.shopping-item').forEach(item => {
-                    const itemText = item.textContent.trim().substring(1).trim();
-                    text += `☐ ${itemText}\n`;
-                });
-                
-                text += '\n';
-            });
+            const text = content.textContent;
             
             navigator.clipboard.writeText(text).then(() => {
                 alert('Shopping list copied to clipboard!');
@@ -1338,19 +1622,7 @@
             const content = document.getElementById('shoppingListContent');
             if (!content) return;
             
-            let text = 'Shopping List\n\n';
-            
-            content.querySelectorAll('.category-section').forEach(section => {
-                const category = section.querySelector('.category-title').textContent;
-                text += `${category}:\n`;
-                
-                section.querySelectorAll('.shopping-item').forEach(item => {
-                    const itemText = item.textContent.trim().substring(1).trim();
-                    text += `- ${itemText}\n`;
-                });
-                
-                text += '\n';
-            });
+            const text = content.textContent;
             
             // Create a notes:// URL for iPhone Notes app
             const encodedText = encodeURIComponent(text);
@@ -1372,9 +1644,13 @@
         // Window click handler to close modals
         window.onclick = function(event) {
             const recipeModal = document.getElementById('recipeModal');
+            const editModal = document.getElementById('editRecipeModal');
             const detailModal = document.getElementById('recipeDetailModal');
             if (event.target == recipeModal) {
                 closeModal();
+            }
+            if (event.target == editModal) {
+                closeEditModal();
             }
             if (event.target == detailModal) {
                 closeDetailModal();
